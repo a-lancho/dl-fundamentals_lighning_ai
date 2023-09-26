@@ -2,13 +2,22 @@
 
 import lightning as L
 from lightning.pytorch.loggers import CSVLogger
+from lightning.pytorch.callbacks import Callback
 import matplotlib.pyplot as plt
 import pandas as pd
 import torch
 from shared_utilities import LightningModel, MNISTDataModule, PyTorchMLP
 from watermark import watermark
 
+train_val_diff = []
+
 if __name__ == "__main__":
+
+    class CustomValDiffCallback(Callback):
+        def on_validation_epoch_end(self, trainer, lightning_module):
+            print(lightning_module.train_acc.compute(), lightning_module.val_acc.compute())
+            diff = lightning_module.train_acc.compute() - lightning_module.val_acc.compute()
+            train_val_diff.append(diff.item())
 
     print(watermark(packages="torch,lightning", python=True))
     print("Torch CUDA available?", torch.cuda.is_available())
@@ -24,6 +33,7 @@ if __name__ == "__main__":
     trainer = L.Trainer(
         max_epochs=10, accelerator="cpu", devices=1, deterministic=True,
         logger=CSVLogger(save_dir="logs/", name="my-model"),
+        callbacks=[CustomValDiffCallback()]
     )
     trainer.fit(model=lightning_model, datamodule=dm)
 
@@ -36,6 +46,9 @@ if __name__ == "__main__":
         f" | Test Acc {test_acc*100:.2f}%"
     )
 
+for diff in train_val_diff:
+    print(f"Train-Validation accuracy difference: {diff*100:.2f}%", )
+    
 # Plotting the logs
 metrics = pd.read_csv(f"{trainer.logger.log_dir}/metrics.csv")
 
