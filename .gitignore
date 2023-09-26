@@ -131,6 +131,7 @@ dmypy.json
 .pyre/
 
 # Dowloaded stuff:
-.JPEG
-.zip    
+*.JPEG
+*.zip
+*.ckpt    
 
