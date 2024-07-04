@@ -17,6 +17,8 @@ def reporthook(count, block_size, total_size):
         start_time = time.time()
         return
     duration = time.time() - start_time
+    if duration == 0:
+        return
     progress_size = int(count * block_size)
     speed = progress_size / (1024.0**2 * duration)
     percent = count * block_size * 100.0 / total_size
@@ -73,8 +75,7 @@ def load_dataset_into_to_dataframe():
     np.random.seed(0)
     df = df.reindex(np.random.permutation(df.index))
 
-    print("Class distribution:")
-    np.bincount(df["label"].values)
+    print("Class distribution:", np.bincount(df["label"].values))
 
     return df
 
